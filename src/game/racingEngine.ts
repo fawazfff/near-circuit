@@ -4,6 +4,8 @@
  * parallax scrolling city skyline, traffic overtaking, drift physics, and nitro boost.
  */
 
+import { sound } from './audio';
+
 export interface RaceInput {
   throttle: boolean;
   brake: boolean;
@@ -152,6 +154,7 @@ export class RacingEngine {
   public start() {
     if (this.isRunning) return;
     this.isRunning = true;
+    sound.startEngine();
     this.lastTime = performance.now();
     this.startTime = performance.now();
     this.loop(this.lastTime);
@@ -159,6 +162,7 @@ export class RacingEngine {
 
   public stop() {
     this.isRunning = false;
+    sound.stopEngine();
     if (this.animationFrameId !== null) {
       cancelAnimationFrame(this.animationFrameId);
       this.animationFrameId = null;
@@ -185,12 +189,15 @@ export class RacingEngine {
     // Boost logic
     const isBoosting = this.input.boost && this.boostFuel > 0;
     if (isBoosting) {
+      if (Math.random() > 0.8) sound.playBoostSound();
       this.boostFuel = Math.max(0, this.boostFuel - 32 * dt);
       this.speed = Math.min(this.boostMaxSpeed, this.speed + 320 * dt);
     } else {
       // Natural slow boost recharge
       this.boostFuel = Math.min(100, this.boostFuel + 5 * dt);
     }
+
+    sound.updateEnginePitch(this.speed, this.boostMaxSpeed, isBoosting);
 
     // Acceleration & Braking
     if (this.input.throttle) {
@@ -233,8 +240,10 @@ export class RacingEngine {
         p.collected = true;
         if (p.type === 'shard') {
           this.shardsCollected++;
+          sound.playShardCollect();
         } else {
           this.boostFuel = Math.min(100, this.boostFuel + 45);
+          sound.playBoostSound();
         }
       }
     }
@@ -265,6 +274,8 @@ export class RacingEngine {
     if (this.distance >= this.trackLength) {
       this.isFinished = true;
       this.isRunning = false;
+      sound.stopEngine();
+      sound.playVictoryFanfare();
       if (this.onFinishCallback) {
         this.onFinishCallback(this.getTelemetry());
       }

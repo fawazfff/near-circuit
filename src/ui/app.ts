@@ -272,9 +272,18 @@ export class AppController {
           </div>
 
           <div style="display: flex; gap: 12px;">
-            <button class="btn-secondary" id="btn-reset-race">↺ RESTART CIRCUIT</button>
-            <button class="btn-primary" id="btn-start-race">⚡ LAUNCH RACE (GAS)</button>
+            <button class="btn-secondary" id="btn-reset-race">↺ RESTART</button>
+            <button class="btn-primary" id="btn-start-race">⚡ LAUNCH (GAS)</button>
           </div>
+        </div>
+
+        <!-- On-Screen Touch / Click Buttons (Mobile Friendly) -->
+        <div style="display: flex; justify-content: center; gap: 12px; margin-top: 4px;" class="touch-bar">
+          <button class="btn-secondary" id="touch-left" style="padding: 14px 24px; font-size: 16px;">◀ STEER LEFT</button>
+          <button class="btn-secondary" id="touch-brake" style="padding: 14px 24px; font-size: 16px;">🛑 BRAKE</button>
+          <button class="btn-primary" id="touch-gas" style="padding: 14px 28px; font-size: 16px;">⚡ GAS</button>
+          <button class="btn-secondary" id="touch-right" style="padding: 14px 24px; font-size: 16px;">STEER RIGHT ▶</button>
+          <button class="btn-primary" id="touch-nos" style="background: var(--cyan); color: #000; padding: 14px 24px; font-size: 16px;">🔥 NOS</button>
         </div>
       </div>
     `;
@@ -617,6 +626,27 @@ export class AppController {
         this.engine.start();
       }
     });
+
+    // Touch Controls
+    const bindTouch = (id: string, prop: 'throttle' | 'brake' | 'left' | 'right' | 'boost') => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const setInput = (val: boolean) => {
+        if (this.engine) {
+          if (val && !this.engine.isRunning) this.engine.start();
+          this.engine.input[prop] = val;
+        }
+      };
+      el.addEventListener('pointerdown', (e) => { e.preventDefault(); setInput(true); });
+      el.addEventListener('pointerup', (e) => { e.preventDefault(); setInput(false); });
+      el.addEventListener('pointerleave', (e) => { e.preventDefault(); setInput(false); });
+    };
+
+    bindTouch('touch-gas', 'throttle');
+    bindTouch('touch-brake', 'brake');
+    bindTouch('touch-left', 'left');
+    bindTouch('touch-right', 'right');
+    bindTouch('touch-nos', 'boost');
 
     // Market Purchase Buttons
     this.root.querySelectorAll<HTMLElement>('[data-action="buy-item"]').forEach(el => {
